@@ -1,0 +1,141 @@
+<!-- <div>{{ appState$ | async | json }}</div> -->
+<div class="container-xl">
+  <div class="table-responsive">
+    <div class="table-wrapper">
+      <div class="table-title">
+        <div class="row">
+          <div class="col-sm-6">
+            <h2>Manage Servers</h2>
+          </div>
+          <div class="col-sm-6">
+            <button (click)="printReport()" class="btn btn-primary" type="button">Print Report</button>
+            <a class="btn btn-success" data-toggle="modal" href="#addEmployeeModal">
+              <i class="material-icons">&#xE147;</i>
+              <span>New Server</span>
+            </a>
+            <span>
+              <select (ngModelChange)="filterServers($event)" class="btn btn-info" name="status" ngModel="ALL"
+                      style="height: 32.91px;">
+                <option value="ALL">ALL</option>
+                <option value="SERVER_UP">SERVER UP</option>
+                <option value="SERVER_DOWN">SERVER DOWN</option>
+              </select>
+            </span>
+          </div>
+        </div>
+      </div>
+      <br>
+      <ng-container *ngIf="(appState$ | async) as appState" [ngSwitch]="appState.dataState">
+        <ng-container *ngSwitchCase="DataState.LOADING_STATE">
+          <div class="col-md-12 single-note-item text-center">
+            <div class="spinner-border text-info" role="status"></div>
+          </div>
+        </ng-container>
+        <ng-container *ngSwitchCase="DataState.LOADED_STATE">
+          <table class="table table-striped table-hover" id="servers">
+            <thead>
+            <tr>
+              <th>Image</th>
+              <th>IP Address</th>
+              <th>Name</th>
+              <th>Memory</th>
+              <th>Type</th>
+              <th>Status</th>
+              <th>Ping</th>
+              <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody *ngFor="let server of appState.appData.data.servers; let i = index">
+            <tr>
+              <td><img [alt]="server.name" [src]="server.imageUrl" height="40" width="40"></td>
+              <td>{{ server.ipAddress }}</td>
+              <td>{{ server.name }}</td>
+              <td>{{ server.memory }}</td>
+              <td>{{ server.type }}</td>
+              <td>
+                <span [ngClass]="[server.status === Status.SERVER_UP ? ' badge-success' : ' badge-danger']"
+                      class="badge">
+                  {{ server.status === Status.SERVER_UP ? 'SERVER UP' : 'SERVER DOWN' }}
+                </span>
+              </td>
+              <td>
+                <a (click)="pingServer(server.ipAddress)" style="cursor: pointer;">
+                  <i *ngIf="(filterStatus$ | async) === '' || (filterStatus$ | async) !== server.ipAddress"
+                     class="material-icons" title="Ping server">&#xe328;</i>
+                  <i *ngIf="(filterStatus$ | async) === server.ipAddress"
+                     class="fa fa-spinner fa-spin" style="font-size:24px"></i>
+                </a>
+              </td>
+              <td>
+                <a (click)="deleteServer(server)" class="delete" data-toggle="modal"
+                   style="cursor: pointer;"><i class="material-icons" data-toggle="tooltip" title="Delete">&#xE872;</i>
+                </a>
+              </td>
+            </tbody>
+          </table>
+        </ng-container>
+        <ng-container *ngSwitchCase="DataState.ERROR_STATE">
+          <div class="alert-danger">
+            {{ appState.error }}
+          </div>
+        </ng-container>
+      </ng-container>
+    </div>
+  </div>
+</div>
+
+<!-- Add server Modal HTML -->
+<div class="modal fade" id="addEmployeeModal">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form #serverForm="ngForm" (ngSubmit)="saveServer(serverForm)">
+        <div class="modal-header">
+          <h4 class="modal-title">Add Server</h4>
+          <button aria-hidden="true" class="close" data-dismiss="modal" type="button">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label>IP</label>
+            <input class="form-control" name="ipAddress" ngModel required type="text">
+          </div>
+          <div class="form-group">
+            <label>Name</label>
+            <input class="form-control" name="name" ngModel required type="text">
+          </div>
+          <div class="row">
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-6 col-6">
+              <div class="form-group">
+                <label>Memory</label>
+                <input class="form-control" name="memory" ngModel required type="text">
+              </div>
+            </div>
+            <div class="col-xl-6 col-lg-6 col-md-6 col-sm-6 col-6">
+              <div class="form-group">
+                <label>Type</label>
+                <input class="form-control" name="type" ngModel required type="text">
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Status</label>
+            <select class="form-control" name="status" name="status" ngModel="SERVER_DOWN" required>
+              <option value="SERVER_UP">SERVER UP</option>
+              <option value="SERVER_DOWN">SERVER DOWN</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-warning" data-dismiss="modal" id="closeModal" type="button">
+            Cancel
+          </button>
+          <button [disabled]="serverForm.invalid || (isLoading$ | async)" class="btn btn-success"
+                  type="submit">
+            <i *ngIf="isLoading$ | async" class="fas fa-spinner fa-spin"></i>
+            <span *ngIf="isLoading$ | async">Saving...</span>
+            <span *ngIf="!(isLoading$ | async)">Add</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
